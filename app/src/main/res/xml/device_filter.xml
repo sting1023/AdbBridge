@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Google Android Device -->
+    <usb-device vendor-id="0x18D1" />
+
+    <!-- Samsung -->
+    <usb-device vendor-id="0x04E8" />
+
+    <!-- Huawei -->
+    <usb-device vendor-id="0x12D1" />
+
+    <!-- HTC -->
+    <usb-device vendor-id="0x0BB4" />
+
+    <!-- Qualcomm -->
+    <usb-device vendor-id="0x05C6" />
+
+    <!-- OnePlus -->
+    <usb-device vendor-id="0x1EBF" />
+
+    <!-- Sony -->
+    <usb-device vendor-id="0x19D1" />
+
+    <!-- LG -->
+    <usb-device vendor-id="0x2A04" />
+
+    <!-- Xiaomi -->
+    <usb-device vendor-id="0x2207" />
+    <usb-device vendor-id="0x0408" />
+
+    <!-- Motorola -->
+    <usb-device vendor-id="0x24E3" />
+
+    <!-- Lenovo -->
+    <usb-device vendor-id="0x2B4C" />
+    <usb-device vendor-id="0x17EF" />
+
+    <!-- Generic Android ADB (catch-all for other manufacturers) -->
+    <usb-device vendor-id="0x0FCE" /> <!-- Sony Ericsson/PSP -->
+    <usb-device vendor-id="0x1A86" /> <!-- Qin -->
+    <usb-device vendor-id="0x1D91" /> <!-- LGE -->
+    <usb-device vendor-id="0x0489" /> <!-- Foxconn -->
+</resources>
