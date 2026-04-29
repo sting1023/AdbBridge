@@ -1,12 +1,6 @@
 package com.sting.adbbridge.ui
 
 import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -15,35 +9,48 @@ import com.sting.adbbridge.R
 import com.sting.adbbridge.adb.AdbInstaller
 import com.sting.adbbridge.adb.AdbResult
 import com.sting.adbbridge.adb.AdbRunner
-import com.sting.adbbridge.usb.UsbDeviceManager
+import java.io.BufferedReader
+import java.io.File
+import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var usbManager: UsbManager
-    private lateinit var deviceManager: UsbDeviceManager
     private lateinit var adbRunner: AdbRunner
-    
     private lateinit var tvStatus: TextView
     private lateinit var tvDeviceInfo: TextView
     private lateinit var etCommand: EditText
     private lateinit var btnExecute: Button
     private lateinit var tvOutput: TextView
     private lateinit var btnClear: Button
-    private lateinit var btnRefresh: Button
+    private lateinit var btnConnect: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var layoutOutput: ScrollView
-    
-    private var connectedDevice: UsbDevice? = null
+    private lateinit var layoutPresetCommands: LinearLayout
+    private lateinit var btnStep1: Button
+    private lateinit var btnStep2: Button
+    private lateinit var btnStep3: Button
+    private lateinit var btnStep4: Button
+    private lateinit var btnReboot: Button
+
+    private var isConnected = false
     private var isAdbInstalled = false
+
+    // 预设命令列表
+    private val presetCommands = arrayOf(
+        "cmd appops set com.sting.virtualloc android:mock_location allow",
+        "settings put global mock_location_enforced 0",
+        "settings put secure mock_location_app com.sting.virtualloc",
+        "settings put global development_settings_enabled 0"
+    )
+
+    private var currentStep = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        
+
         initViews()
         initAdb()
-        checkDeviceConnection()
-        registerUsbReceiver()
     }
 
     private fun initViews() {
@@ -53,25 +60,44 @@ class MainActivity : AppCompatActivity() {
         btnExecute = findViewById(R.id.btnExecute)
         tvOutput = findViewById(R.id.tvOutput)
         btnClear = findViewById(R.id.btnClear)
-        btnRefresh = findViewById(R.id.btnRefresh)
+        btnConnect = findViewById(R.id.btnRefresh)  // 复用刷新按钮
         progressBar = findViewById(R.id.progressBar)
         layoutOutput = findViewById(R.id.layoutOutput)
+        layoutPresetCommands = findViewById(R.id.layoutPresetCommands)
+        btnStep1 = findViewById(R.id.btnStep1)
+        btnStep2 = findViewById(R.id.btnStep2)
+        btnStep3 = findViewById(R.id.btnStep3)
+        btnStep4 = findViewById(R.id.btnStep4)
+        btnReboot = findViewById(R.id.btnReboot)
 
-        btnExecute.setOnClickListener { executeCommand() }
-        btnClear.setOnClickListener { 
+        // 连接按钮
+        btnConnect.text = "🔗 连接无线调试"
+        btnConnect.setOnClickListener { connectWireless() }
+
+        // 执行命令按钮
+        btnExecute.setOnClickListener { executeCustomCommand() }
+
+        // 清除按钮
+        btnClear.setOnClickListener {
             tvOutput.text = ""
             tvOutput.visibility = View.GONE
             layoutOutput.visibility = View.GONE
         }
-        btnRefresh.setOnClickListener { checkDeviceConnection() }
+
+        // 预设命令按钮
+        btnStep1.setOnClickListener { executePresetCommand(0) }
+        btnStep2.setOnClickListener { executePresetCommand(1) }
+        btnStep3.setOnClickListener { executePresetCommand(2) }
+        btnStep4.setOnClickListener { executePresetCommand(3) }
+        btnReboot.setOnClickListener { rebootDevice() }
+
+        // 初始状态
+        updatePresetButtons()
     }
 
     private fun initAdb() {
-        usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
-        deviceManager = UsbDeviceManager(this)
         adbRunner = AdbRunner(this)
-        
-        // 检查并安装ADB
+
         Thread {
             isAdbInstalled = AdbInstaller.installIfNeeded(this)
             runOnUiThread {
@@ -82,116 +108,209 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateStatus() {
         if (!isAdbInstalled) {
-            tvStatus.text = "⚠️ ADB未安装，请将adb文件放入: internal storage/adbbridge/adb"
+            tvStatus.text = "⚠️ ADB未安装"
             tvStatus.setTextColor(0xFFFF9800.toInt())
-        } else if (connectedDevice != null) {
-            tvStatus.text = "✅ 已连接设备: ${connectedDevice!!.productName}"
-            tvStatus.setTextColor(0xFF4CAF50.toInt())
-            btnExecute.isEnabled = true
-        } else {
-            tvStatus.text = "⚡ 等待USB设备连接..."
-            tvStatus.setTextColor(0xFF2196F3.toInt())
+            btnConnect.isEnabled = false
             btnExecute.isEnabled = false
-        }
-    }
-
-    private fun checkDeviceConnection() {
-        val device = deviceManager.findAndroidDevice()
-        if (device != null) {
-            connectedDevice = device
-            val hasPermission = usbManager.hasPermission(device)
-            if (!hasPermission) {
-                tvDeviceInfo.text = "🔓 需要授权USB调试\n设备: ${device.productName}\n点击\"授权\"按钮"
-                showPermissionDialog(device)
-            } else {
-                tvDeviceInfo.text = "📱 ${device.productName}\n设备ID: ${device.vendorId}:${device.productId}"
-            }
+        } else if (isConnected) {
+            tvStatus.text = "✅ 已连接到 localhost:5555"
+            tvStatus.setTextColor(0xFF4CAF50.toInt())
+            btnConnect.isEnabled = true
+            btnConnect.text = "🔗 已连接 ✓"
+            btnExecute.isEnabled = true
+            enablePresetButtons(true)
         } else {
-            connectedDevice = null
-            tvDeviceInfo.text = "未检测到Android设备\n请用USB线连接另一台手机\n并确保USB调试已开启"
+            tvStatus.text = "⚡ 等待连接无线调试..."
+            tvStatus.setTextColor(0xFF2196F3.toInt())
+            btnConnect.isEnabled = true
+            btnConnect.text = "🔗 连接无线调试"
+            btnExecute.isEnabled = false
+            enablePresetButtons(false)
         }
-        updateStatus()
     }
 
-    private fun showPermissionDialog(device: UsbDevice) {
-        val intent = android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED
-        val pendingIntent = android.app.PendingIntent.getBroadcast(
-            this, 0, Intent(intent), 
-            android.app.PendingIntent.FLAG_IMMUTABLE
-        )
-        usbManager.requestPermission(device, pendingIntent)
+    private fun connectWireless() {
+        if (isConnected) {
+            // 断开连接
+            disconnectWireless()
+            return
+        }
+
+        tvDeviceInfo.text = "正在连接 localhost:5555..."
+        btnConnect.isEnabled = false
+        progressBar.visibility = View.VISIBLE
+
+        Thread {
+            // 先尝试断开（清理旧连接）
+            runCommandSync("disconnect localhost:5555")
+
+            // 连接
+            val result = runCommandSync("connect localhost:5555")
+
+            isConnected = result.first
+
+            runOnUiThread {
+                progressBar.visibility = View.GONE
+                if (isConnected) {
+                    tvDeviceInfo.text = "✅ 无线调试已连接\n目标: localhost:5555\n\n请确保手机已开启「开发者选项 → 无线调试」"
+                    appendOutput("连接成功: localhost:5555\n")
+                } else {
+                    tvDeviceInfo.text = "❌ 连接失败\n\n请确保：\n1. 手机已开启「开发者选项」\n2. 已开启「无线调试」\n3. 处于无线调试模式"
+                    appendOutput("连接失败: ${result.second}\n")
+                }
+                updateStatus()
+            }
+        }.start()
     }
 
-    private fun executeCommand() {
+    private fun disconnectWireless() {
+        Thread {
+            runCommandSync("disconnect localhost:5555")
+            isConnected = false
+            runOnUiThread {
+                tvDeviceInfo.text = "未连接到无线调试\n\n请确保手机已开启：\n开发者选项 → 无线调试"
+                updateStatus()
+            }
+        }.start()
+    }
+
+    private fun executeCustomCommand() {
         val cmd = etCommand.text.toString().trim()
         if (cmd.isEmpty()) {
             Toast.makeText(this, "请输入命令", Toast.LENGTH_SHORT).show()
             return
         }
-        if (connectedDevice == null) {
-            Toast.makeText(this, "请先连接设备", Toast.LENGTH_SHORT).show()
+        if (!isConnected) {
+            Toast.makeText(this, "请先连接无线调试", Toast.LENGTH_SHORT).show()
             return
         }
 
+        executeAdbCommand(cmd)
+    }
+
+    private fun executePresetCommand(step: Int) {
+        if (!isConnected) {
+            Toast.makeText(this, "请先连接无线调试", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val cmd = presetCommands[step]
+        executeAdbCommand(cmd, step + 1)
+    }
+
+    private fun executeAdbCommand(cmd: String, step: Int? = null) {
         layoutOutput.visibility = View.VISIBLE
         tvOutput.visibility = View.VISIBLE
         progressBar.visibility = View.VISIBLE
         btnExecute.isEnabled = false
-        tvOutput.append("\n$ $cmd\n")
+        btnConnect.isEnabled = false
+        disablePresetButtons()
+
+        val displayCmd = if (step != null) "【第${step}步】$cmd" else "\n$ cmd"
+        appendOutput("$displayCmd\n")
 
         Thread {
-            val result = adbRunner.execute(cmd)
+            val result = adbRunner.shell(cmd)
+
             runOnUiThread {
                 progressBar.visibility = View.GONE
                 btnExecute.isEnabled = true
-                displayResult(result)
+                btnConnect.isEnabled = true
+
+                if (result.isSuccess) {
+                    appendOutput("✅ 成功\n")
+                    if (step != null && currentStep < step) {
+                        currentStep = step
+                        updatePresetButtons()
+                    }
+                } else {
+                    appendOutput("❌ 失败: ${result.error}\n")
+                }
+
+                updateStatus()
+                layoutOutput.post {
+                    layoutOutput.fullScroll(View.FOCUS_DOWN)
+                }
             }
         }.start()
     }
 
-    private fun displayResult(result: AdbResult) {
-        if (result.isSuccess) {
-            if (result.output.isNotEmpty()) {
-                tvOutput.append(result.output + "\n")
+    private fun rebootDevice() {
+        appendOutput("\n正在重启手机...\n")
+        btnReboot.isEnabled = false
+
+        Thread {
+            val result = adbRunner.shell("reboot")
+            runOnUiThread {
+                if (!result.isSuccess) {
+                    appendOutput("❌ 重启命令失败: ${result.error}\n")
+                    btnReboot.isEnabled = true
+                } else {
+                    appendOutput("✅ 重启命令已发送\n")
+                }
+            }
+        }.start()
+    }
+
+    private fun runCommandSync(cmd: String): Pair<Boolean, String> {
+        return try {
+            val adbPath = File(filesDir, "adb/adb").absolutePath
+            val process = Runtime.getRuntime().exec(arrayOf(adbPath, cmd))
+            val output = process.inputStream.bufferedReader().readText()
+            val error = process.errorStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+
+            if (exitCode == 0) {
+                Pair(true, output.ifEmpty { "OK" })
             } else {
-                tvOutput.append("✅ 命令执行成功\n")
+                Pair(false, error.ifEmpty { "exit: $exitCode" })
             }
-        } else {
-            tvOutput.append("❌ ${result.error}\n")
-        }
-        layoutOutput.post {
-            layoutOutput.fullScroll(View.FOCUS_DOWN)
+        } catch (e: Exception) {
+            Pair(false, e.message ?: "未知错误")
         }
     }
 
-    private fun registerUsbReceiver() {
-        val filter = IntentFilter().apply {
-            addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED)
-            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
-        }
-        registerReceiver(usbReceiver, filter)
+    private fun appendOutput(text: String) {
+        tvOutput.append(text)
     }
 
-    private val usbReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                    val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-                    if (device != null && device.vendorId == 0x18D1) { // Google
-                        checkDeviceConnection()
-                    }
-                }
-                UsbManager.ACTION_USB_DEVICE_DETACHED -> {
-                    connectedDevice = null
-                    tvDeviceInfo.text = "设备已断开"
-                    updateStatus()
-                }
-            }
+    private fun updatePresetButtons() {
+        btnStep1.isEnabled = isConnected && currentStep < 1
+        btnStep2.isEnabled = isConnected && currentStep < 2
+        btnStep3.isEnabled = isConnected && currentStep < 3
+        btnStep4.isEnabled = isConnected && currentStep < 4
+
+        btnStep1.text = "第1步: mock_location"
+        btnStep2.text = "第2步: mock_location_enforced"
+        btnStep3.text = "第3步: mock_location_app"
+        btnStep4.text = "第4步: development_settings"
+
+        if (currentStep >= 4) {
+            btnReboot.isEnabled = true
+            appendOutput("\n🎉 全部命令执行完成！可以重启手机了\n")
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        try { unregisterReceiver(usbReceiver) } catch (e: Exception) {}
+    private fun enablePresetButtons(enabled: Boolean) {
+        val shouldEnable = enabled && when (currentStep) {
+            0 -> true
+            1 -> currentStep < 1
+            2 -> currentStep < 2
+            3 -> currentStep < 3
+            else -> currentStep < 4
+        }
+        btnStep1.isEnabled = shouldEnable && currentStep < 1
+        btnStep2.isEnabled = shouldEnable && currentStep < 2
+        btnStep3.isEnabled = shouldEnable && currentStep < 3
+        btnStep4.isEnabled = shouldEnable && currentStep < 4
+        btnReboot.isEnabled = shouldEnable && currentStep >= 4
+    }
+
+    private fun disablePresetButtons() {
+        btnStep1.isEnabled = false
+        btnStep2.isEnabled = false
+        btnStep3.isEnabled = false
+        btnStep4.isEnabled = false
+        btnReboot.isEnabled = false
     }
 }

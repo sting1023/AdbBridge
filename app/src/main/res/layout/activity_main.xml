@@ -1,156 +1,261 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#1A1A2E"
-    android:padding="16dp"
+    android:fillViewport="true"
     tools:context=".ui.MainActivity">
 
-    <!-- 标题 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="AdbBridge"
-        android:textSize="28sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="USB OTG ADB 控制器"
-        android:textSize="14sp"
-        android:textColor="#888888"
-        android:gravity="center"
-        android:paddingBottom="16dp"/>
-
-    <!-- 状态显示 -->
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="⚡ 初始化中..."
-        android:textSize="16sp"
-        android:textColor="#2196F3"
-        android:background="@drawable/bg_status"
-        android:padding="12dp"
-        android:gravity="center"/>
-
-    <!-- 设备信息 -->
-    <TextView
-        android:id="@+id/tvDeviceInfo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="未检测到Android设备\n请用USB线连接另一台手机\n并确保USB调试已开启"
-        android:textSize="14sp"
-        android:textColor="#CCCCCC"
-        android:background="@drawable/bg_device_info"
-        android:padding="16dp"
-        android:gravity="center"
-        android:minHeight="80dp"/>
-
-    <!-- 刷新按钮 -->
-    <Button
-        android:id="@+id/btnRefresh"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="🔄 刷新设备"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_button_secondary"
-        android:textAllCaps="false"/>
-
-    <!-- 命令输入区 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
+        <!-- 标题 -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="$"
-            android:textColor="#4CAF50"
-            android:textSize="18sp"
-            android:textStyle="bold"/>
-
-        <EditText
-            android:id="@+id/etCommand"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:hint="输入adb命令，如: shell pm list packages"
-            android:textColorHint="#666666"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:singleLine="true"
-            android:imeOptions="actionSend"
-            android:inputType="text"/>
-    </LinearLayout>
-
-    <!-- 执行按钮 -->
-    <Button
-        android:id="@+id/btnExecute"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="▶ 执行命令"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_button_primary"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:enabled="false"/>
-
-    <!-- 进度条 -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"/>
-
-    <!-- 输出区域 -->
-    <ScrollView
-        android:id="@+id/layoutOutput"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="12dp"
-        android:visibility="gone"
-        android:background="@drawable/bg_output">
-
-        <TextView
-            android:id="@+id/tvOutput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="#00FF00"
-            android:textSize="12sp"
-            android:fontFamily="monospace"
-            android:padding="12dp"/>
-    </ScrollView>
+            android:text="AdbBridge"
+            android:textSize="28sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingTop="16dp"
+            android:paddingBottom="4dp"/>
 
-    <!-- 清除按钮 -->
-    <Button
-        android:id="@+id/btnClear"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="🗑️ 清除输出"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_button_secondary"
-        android:textAllCaps="false"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="无线调试执行器"
+            android:textSize="14sp"
+            android:textColor="#888888"
+            android:gravity="center"
+            android:paddingBottom="16dp"/>
 
-</LinearLayout>
+        <!-- 状态显示 -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚡ 初始化中..."
+            android:textSize="16sp"
+            android:textColor="#2196F3"
+            android:background="@drawable/bg_status"
+            android:padding="12dp"
+            android:gravity="center"/>
+
+        <!-- 设备信息 -->
+        <TextView
+            android:id="@+id/tvDeviceInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="未连接到无线调试\n\n请确保手机已开启：\n开发者选项 → 无线调试"
+            android:textSize="14sp"
+            android:textColor="#CCCCCC"
+            android:background="@drawable/bg_device_info"
+            android:padding="16dp"
+            android:gravity="center"
+            android:minHeight="80dp"/>
+
+        <!-- 连接按钮 -->
+        <Button
+            android:id="@+id/btnRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🔗 连接无线调试"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_secondary"
+            android:textAllCaps="false"/>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="#333333"/>
+
+        <!-- 预设命令区域 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="VirtuaLoc 配置（按顺序执行）"
+            android:textSize="16sp"
+            android:textColor="#4CAF50"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutPresetCommands"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnStep1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="第1步: mock_location"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_button_primary"
+                android:textAllCaps="false"
+                android:enabled="false"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnStep2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="第2步: mock_location_enforced"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_button_primary"
+                android:textAllCaps="false"
+                android:enabled="false"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnStep3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="第3步: mock_location_app"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_button_primary"
+                android:textAllCaps="false"
+                android:enabled="false"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnStep4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="第4步: development_settings"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/bg_button_primary"
+                android:textAllCaps="false"
+                android:enabled="false"
+                android:layout_marginBottom="8dp"/>
+        </LinearLayout>
+
+        <!-- 重启按钮 -->
+        <Button
+            android:id="@+id/btnReboot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔄 重启手机"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_danger"
+            android:textAllCaps="false"
+            android:enabled="false"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 分割线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:background="#333333"/>
+
+        <!-- 自定义命令区域 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="自定义命令"
+            android:textSize="16sp"
+            android:textColor="#2196F3"
+            android:textStyle="bold"
+            android:paddingBottom="8dp"/>
+
+        <!-- 命令输入区 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$"
+                android:textColor="#4CAF50"
+                android:textSize="18sp"
+                android:textStyle="bold"/>
+
+            <EditText
+                android:id="@+id/etCommand"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:hint="输入adb命令"
+                android:textColorHint="#666666"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:background="@drawable/bg_input"
+                android:padding="12dp"
+                android:singleLine="true"
+                android:imeOptions="actionSend"
+                android:inputType="text"/>
+        </LinearLayout>
+
+        <!-- 执行按钮 -->
+        <Button
+            android:id="@+id/btnExecute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="▶ 执行命令"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_primary"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:enabled="false"/>
+
+        <!-- 进度条 -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
+        <!-- 输出区域 -->
+        <ScrollView
+            android:id="@+id/layoutOutput"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            android:background="@drawable/bg_output"
+            android:minHeight="150dp">
+
+            <TextView
+                android:id="@+id/tvOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#00FF00"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:padding="12dp"/>
+        </ScrollView>
+
+        <!-- 清除按钮 -->
+        <Button
+            android:id="@+id/btnClear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="🗑️ 清除输出"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/bg_button_secondary"
+            android:textAllCaps="false"/>
+
+    </LinearLayout>
+</ScrollView>
