@@ -29,7 +29,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --no-build-cache
+        run: ./gradlew assembleDebug --no-daemon --no-build-cache 2>&1 || {
+            echo "=== BUILD FAILED ==="
+            cat app/build/reports/lint-results-debug.html 2>/dev/null || true
+            ./gradlew dependencies --configuration debugCompileClasspath 2>&1 | tail -50
+            exit 1
+          }
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
